@@ -1,0 +1,207 @@
+
+buat halaman create
+1. folder create
+2. file page
+3. buat folder components
+4. create-form.tsx
+5. import components ke page create
+6. bikin folder lib
+7. bikin file action.ts
+8. pemberian validasi pada action.ts
+9. fungsinya diimport di create-form
+10.gunakan fungsi form action untuk implementasi fungsi yang ada di action.ts
+11. tambahkan file prisma di lib agar tidak mengenerate berulang
+12. import vercel blob dan prisma di action
+13. destruc url setelah kode validasi
+
+14. membuat components button dan card
+15. menambahkan reusable data dengan file di lib (data.ts) -> digunakan untuk mengambil data dari db
+16. menangkap prop dari lib data ke card
+17. menangkap prop untuk di masukkan di button edit dan delete
+18. tambahkan protocol dan hostname blob vercel ke next.config.mjs
+
+KONFIGURASI VERCEL DAN BLOB UNTUK GAMBAR DI NEXT JS
+1. masuk vercel
+2. klik storage
+3. klik  create database
+4. klik prisma prostgres
+5. install (npm i -D prisma 
+npm i @prisma/client
+npx prisma init
+npx prisma generate
+install npm i clsx zod)
+6. copy .env.local di vercel masukan di .env nextjs
+7. tambahkan model di file schema.prisma
+8. jalankan dengan perintah -> npx prisma migrate dev
+
+BUAT UNTUK BLOB VERCELNYA
+9. masuk ke vercel
+10. klik storage
+11. create database dan pilih blob
+12. ambil .env.local letakkan di .env nextjs
+13. install npm i @vercel/blob
+
+
+UNTUK UPLOAD DATA KE VERCEL DAN BLOB MENGGUNAKAN NEXT JS 16
+1. buat file prisma.ts di lib 
+import { PrismaClient } from "@prisma/client";
+
+declare global {
+  var prisma: PrismaClient | undefined;
+}
+
+export const prisma = globalThis.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
+
+2. buat file untuk upload di folder components -> create-form.tsx (sebagai fungsi dari tampilan create)
+"use client";
+
+import React from "react";
+import { uploadImage } from "../lib/action";
+import { useActionState } from "react";
+
+const CreateForm = () => {
+  const [state, formAction] = useActionState(uploadImage, null);
+  return (
+    <form action={formAction} encType="multipart/form-data">
+      <div className="mb-4 pt-2">
+        <input
+          type="text"
+          name="name"
+          className="py-2 px-4 rounded-sm border border-gray-400 w-full"
+          placeholder="namamu"
+        />
+        {/* menampilkan validasi error */}
+        <div aria-live="polite" aria-atomic="true">
+          <p className="text-sm text-red-500 mt-2">{state?.error?.name}</p>
+        </div>
+      </div>
+      <div className="mb-4 pt-2">
+        <input
+          type="file"
+          name="image"
+          className="file:py-2 file:px-4 file:mr-4 file:rounded-sm file:border-0 file:bg-gray-200 hover:file:bg-gray-300
+          file:cursor-pointer border border-gray-400 w-full"
+        />
+        {/* menampilkan validasi error */}
+        <div aria-live="polite" aria-atomic="true">
+          <p className="text-sm text-red-500 mt-2">{state?.error?.image}</p>
+        </div>
+      </div>
+      <div className="mb-4 pt-4">
+        <button className="bg-blue-700 text-white w-full font-medium py-2.5 px-6 text-base rounded-sm hover:bg-blue-600">
+          upload
+        </button>
+      </div>
+    </form>
+  );
+};
+
+export default CreateForm;
+
+3. bikin page tampilan buat create
+import React from "react";
+import CreateForm from "../components/create-form";
+
+const CreatePage = () => {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-100">
+      <div className="bg-white rounded-sm shadow p-8">
+        <h1 className="text-2xl font-bold mb-5">Upload Photo</h1>
+        <CreateForm />
+      </div>
+    </div>
+  );
+};
+
+export default CreatePage;
+
+
+
+TAMPILKAN DATA DARI DATABASE KE WEB
+1. buat file button untuk fungsi button edit dan delete setiap data
+"use client";
+
+import Link from "next/link";
+
+export const EditButton = ({ id }: { id: string }) => {
+  return (
+    <Link
+      href={`edit/${id}`}
+      className="py-3 text-sm bg-gray-50 rounded-bl-md hover:bg-gray-100 text-center"
+    >
+      Edit
+    </Link>
+  );
+};
+export const DeleteButton = ({ id }: { id: string }) => {
+  return (
+    <form className="py-3 text-sm bg-gray-50 rounded-bl-md hover:bg-gray-100 text-center">
+      <button type="submit">Delete</button>
+    </form>
+  );
+};
+
+2. ambil dari database untuk datanya
+import { prisma } from "../lib/prisma";
+
+export const getImages = async () => {
+  try {
+    const result = await prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return result;
+  } catch (error) {
+    throw new Error("gagal");
+  }
+};
+
+3. buat card atau layout untuk penyajian datanya
+import Image from "next/image";
+import React from "react";
+import { DeleteButton, EditButton } from "./button";
+import { User } from "@prisma/client";
+
+// menangkap prop dari data.ts
+const Card = ({ data }: { data: User }) => {
+  return (
+    <div className="max-w-sm border border-gray-200 rounded-md shadow">
+      <div className="relative w-full h-64">
+        <Image
+          src={data.image}
+          alt={data.name}
+          fill
+          className="rounded-t-md object-cover"
+        />
+      </div>
+
+      <div className="p-5">
+        <h1 className="text-2xl font-bold text-gray-900 truncate">
+          {data.name}
+        </h1>
+      </div>
+      <div className="flex items-center justify-between">
+        <EditButton id={data.id} />
+        <DeleteButton id={data.id} />
+      </div>
+    </div>
+  );
+};
+
+export default Card;
+
+4. tambahkan protocol dan juga hostname dari error ke next.config.ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "xovzvh6jtumu8g5z.public.blob.vercel-storage.com",
+      },
+    ],
+  },
+};
+
+export default nextConfig;

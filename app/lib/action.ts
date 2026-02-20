@@ -114,17 +114,22 @@ export const updateImage = async (
 };
 
 // hapus data
-export const deleteImage = async (id: string) => {
+export const deleteImage = async (id: string): Promise<void> => {
   const data = await getImageById(id);
-  if (!data) return { message: "no data" };
+
+  if (!data) {
+    return;
+  }
 
   await del(data.image);
+
   try {
     await prisma.user.delete({
       where: { id: Number(id) },
     });
   } catch (error) {
-    return { message: "gagal" };
+    console.error("Delete failed:", error);
+    return;
   }
 
   revalidatePath("/");

@@ -7,7 +7,8 @@ import type { User } from "@prisma/client";
 
 const EditForm = ({ data }: { data: User }) => {
   const [state, formAction] = useActionState(
-    updateImage.bind(null, data.id),
+    // updateImage.bind(null, data.id),
+    updateImage.bind(null, String(data.id)),
     null,
   );
   return (
@@ -18,7 +19,8 @@ const EditForm = ({ data }: { data: User }) => {
           name="name"
           className="py-2 px-4 rounded-sm border border-gray-400 w-full"
           placeholder="namamu"
-          defaultValue={data.name}
+          // defaultValue={data.name}
+          defaultValue={data.name ?? ""}
         />
         {/* menampilkan validasi error */}
         <div aria-live="polite" aria-atomic="true">

@@ -33,8 +33,11 @@ const Card = ({ data }: { data: User }) => {
         </h1>
       </div>
       <div className="flex items-center justify-between">
-        <EditButton id={data.id} />
-        <DeleteButton id={data.id} />
+        {/* <EditButton id={data.id} />
+        <DeleteButton id={data.id} /> */}
+
+        <EditButton id={String(data.id)} />
+        <DeleteButton id={String(data.id)} />
       </div>
     </div>
   );
